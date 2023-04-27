@@ -17,6 +17,7 @@ func ReadConfig(config_path string) *Config {
 	file, err := os.Open(config_path)
 	if err != nil {
 		fmt.Println("error: ", err)
+		panic("error reading config file")
 	}
 
 	defer file.Close()
@@ -26,6 +27,7 @@ func ReadConfig(config_path string) *Config {
 
 	if err != nil {
 		fmt.Println("error: ", err)
+		panic("error parsing config file")
 	}
 
 	return &config

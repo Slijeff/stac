@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 )
 
 func HandleGithubWebhook(c *gin.Context) {
-	fmt.Printf("token: %s\n", c.GetHeader("token"))
 	c.Header("test", "success!")
+	c.JSON(200, gin.H{"copythat!": c.GetHeader("token")})
 }

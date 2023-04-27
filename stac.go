@@ -1,19 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"stac/controller"
 	"stac/utils"
+
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-
-	config := utils.ReadConfig("./config.json")
-	fmt.Println("IP: ", config.IP, "Port: ", config.Port)
+	if len(os.Args) < 2 {
+		panic("Please provide the config file path")
+	}
+	config := utils.ReadConfig(os.Args[1])
 
 	router := gin.Default()
+	router.SetTrustedProxies(nil)
 	router.GET("/hook", controller.HandleGithubWebhook)
 	router.Run(config.IP + ":" + config.Port)
 }
