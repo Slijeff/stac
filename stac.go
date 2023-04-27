@@ -17,6 +17,6 @@ func main() {
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
-	router.GET("/hook", controller.HandleGithubWebhook)
+	router.POST("/hook", controller.HandleGithubWebhook)
 	router.Run(config.IP + ":" + config.Port)
 }
