@@ -1,11 +1,13 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
+	"stac/database"
+	"stac/models"
 	"stac/utils"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/protobuf/proto"
 )
 
 type RegisterRequestBody struct {
@@ -18,27 +20,60 @@ type RegisterRequestBody struct {
 func RegisterRepo(c *gin.Context) {
 	stac_pwd := c.GetHeader("stac-pwd")
 	if len(stac_pwd) == 0 {
-		fmt.Println("Please provide your stac_pwd when configuring repos")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"msg": "no password in header",
+		})
 		return
 	}
 
 	// might use secure compare?
 	if stac_pwd != utils.Config.Pwd {
-		c.JSON(http.StatusForbidden, gin.H{
-			"code": http.StatusForbidden,
-			"msg":  "password doesn't match",
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"msg": "password doesn't match",
 		})
 		return
 	}
 	var requestBody RegisterRequestBody
 
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		fmt.Println("The request format is incorrect")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "request format is incorrect",
+		})
+		return
 	}
-	fmt.Println(requestBody)
-	fmt.Println(requestBody.Name, requestBody.Use_secret)
+
+	hasRepo, err := database.DB.Has([]byte(requestBody.Name), nil)
+	if utils.CheckError(err) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"msg": "leveldb error",
+		})
+		return
+	}
+	if hasRepo {
+		c.JSON(http.StatusOK, gin.H{
+			"msg": "repo already exist",
+		})
+		return
+	} else {
+		// Create protobuf
+		p := models.GithubHook{
+			UseSecret: requestBody.Use_secret,
+		}
+		out, err := proto.Marshal(&p)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"msg": "protobuf encoding failed",
+			})
+			return
+		}
+		if err := database.DB.Put([]byte(requestBody.Name), out, nil); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"msg": "leveldb error",
+			})
+			return
+		}
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-		"msg":  "success",
+		"msg": "success",
 	})
 }

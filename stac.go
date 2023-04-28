@@ -29,7 +29,7 @@ func main() {
 		database.DB.Close()
 		os.Exit(0)
 	}()
-	database.DB.Put([]byte("key"), []byte("test-value"), nil)
+
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
