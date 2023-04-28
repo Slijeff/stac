@@ -1,4 +1,5 @@
 {
     "IP": "localhost",
-    "Port": "8080"
+    "Port": "8080",
+    "Stac-pwd": "test-password"
 }

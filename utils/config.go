@@ -6,13 +6,18 @@ import (
 	"os"
 )
 
-type Config struct {
+type Configuration struct {
 	IP   string
 	Port string
+	Pwd  string `json:"Stac-pwd"`
 }
 
-func ReadConfig(config_path string) *Config {
-	var config Config
+var (
+	Config *Configuration
+)
+
+func ReadConfig(config_path string) {
+	var config Configuration
 
 	file, err := os.Open(config_path)
 	if err != nil {
@@ -30,5 +35,5 @@ func ReadConfig(config_path string) *Config {
 		panic("error parsing config file")
 	}
 
-	return &config
+	Config = &config
 }
