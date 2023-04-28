@@ -3,5 +3,5 @@ syntax = "proto3";
 option go_package = ".";
 
 message GithubHook {
-    string repo = 1;
+    bool use_secret = 1;
 }
