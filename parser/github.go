@@ -80,3 +80,7 @@ func Parse(secret []byte, r *http.Request) (hook *Webhook, err error) {
 	}
 	return h, e
 }
+
+func ParseWithoutSecret(r *http.Request) (hook *Webhook, err error) {
+	return LoadWebhook(r)
+}
