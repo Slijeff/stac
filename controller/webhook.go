@@ -2,14 +2,16 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"stac/database"
+	"stac/models"
 	"stac/parser"
 	"stac/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/v52/github"
+	"google.golang.org/protobuf/proto"
 )
 
 func HandleGithubWebhook(c *gin.Context) {
@@ -21,19 +23,46 @@ func HandleGithubWebhook(c *gin.Context) {
 	// Determine which kind of event it is
 	switch hook.Event {
 	case "push":
-		handlePushEvent(hook)
+		handlePushEvent(hook, c)
 	default:
-		fmt.Println("Received not implemented event type: ", hook.Event)
+		c.JSON(http.StatusNotImplemented, gin.H{"msg": "Received not implemented event type"})
+		return
 	}
-
-	c.JSON(http.StatusOK, OPSuccess)
 }
 
-func handlePushEvent(hook *parser.Webhook) {
+func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 	evt := github.PushEvent{}
 	err := json.Unmarshal(hook.Payload, &evt)
 	if utils.CheckError(err) {
 		return
 	}
-	fmt.Println("receidved", evt.GetHeadCommit().GetAuthor().GetName())
+	// lookup if this repo is in the database
+	registered, err := database.DB.Has([]byte(evt.GetRepo().GetFullName()), nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, OPServerError)
+		return
+	}
+	if registered {
+		// check if it uses secret
+		pb, err := database.DB.Get([]byte(evt.GetRepo().GetFullName()), nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, OPServerError)
+			return
+		}
+		p := &models.GithubHook{}
+		if err := proto.Unmarshal(pb, p); err != nil {
+			c.JSON(http.StatusInternalServerError, OPServerError)
+			return
+		}
+		if p.UseSecret {
+			if !hook.Verify([]byte(utils.Config.Pwd)) {
+				c.JSON(http.StatusUnauthorized, OPUnauth)
+			}
+		}
+
+		// TODO: Execute CI/CD logic
+
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Repo not registered with stac, please use the register API"})
+	}
 }
