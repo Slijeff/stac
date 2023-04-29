@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"stac/parser"
 	"stac/utils"
@@ -25,7 +26,7 @@ func HandleGithubWebhook(c *gin.Context) {
 		fmt.Println("Received not implemented event type: ", hook.Event)
 	}
 
-	c.JSON(200, gin.H{"copythat!": c.GetHeader("X-GitHub-Delivery")})
+	c.JSON(http.StatusOK, OPSuccess)
 }
 
 func handlePushEvent(hook *parser.Webhook) {

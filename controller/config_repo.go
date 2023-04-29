@@ -20,17 +20,13 @@ type RegisterRequestBody struct {
 func RegisterRepo(c *gin.Context) {
 	stac_pwd := c.GetHeader("stac-pwd")
 	if len(stac_pwd) == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"msg": "no password in header",
-		})
+		c.JSON(http.StatusUnauthorized, OPUnauth)
 		return
 	}
 
 	// might use secure compare?
 	if stac_pwd != utils.Config.Pwd {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"msg": "password doesn't match",
-		})
+		c.JSON(http.StatusUnauthorized, OPUnauth)
 		return
 	}
 	var requestBody RegisterRequestBody
@@ -44,9 +40,7 @@ func RegisterRepo(c *gin.Context) {
 
 	hasRepo, err := database.DB.Has([]byte(requestBody.Name), nil)
 	if utils.CheckError(err) {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "leveldb error",
-		})
+		c.JSON(http.StatusInternalServerError, OPServerError)
 		return
 	}
 	if hasRepo {
@@ -61,19 +55,13 @@ func RegisterRepo(c *gin.Context) {
 		}
 		out, err := proto.Marshal(&p)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"msg": "protobuf encoding failed",
-			})
+			c.JSON(http.StatusInternalServerError, OPServerError)
 			return
 		}
 		if err := database.DB.Put([]byte(requestBody.Name), out, nil); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"msg": "leveldb error",
-			})
+			c.JSON(http.StatusInternalServerError, OPServerError)
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"msg": "success",
-	})
+	c.JSON(http.StatusOK, OPSuccess)
 }

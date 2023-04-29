@@ -14,4 +14,10 @@ func Register(router *gin.Engine) {
 	// CONFIG SETTING GROUP
 	configRoute := router.Group("/config")
 	configRoute.POST("/register", RegisterRepo)
+
+	// DATABASE OP GROUP
+	dbRoute := router.Group("/db")
+	dbRoute.GET("/getall", GetAllFromDB)
+	dbRoute.GET("/delall", DeleteAllFromDB)
+	dbRoute.GET("/delkey", DeleteSingleKey)
 }
