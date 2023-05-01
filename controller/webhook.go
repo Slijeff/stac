@@ -3,6 +3,9 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"os/exec"
+	"path"
 
 	"stac/database"
 	"stac/models"
@@ -60,9 +63,36 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			}
 		}
 
-		// TODO: Execute CI/CD logic
+		// Execute CI/CD logic
+		cloneURL := evt.GetRepo().GetCloneURL()
+		repoPath := path.Join(utils.Config.Base, evt.GetRepo().GetName())
+		existed, err := exists(repoPath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, OPServerError)
+			return
+		}
+		if existed {
+			if err := os.RemoveAll(repoPath); err != nil {
+				c.JSON(http.StatusInternalServerError, OPServerError)
+				return
+			}
+			exec.Command("git", "clone", cloneURL, repoPath).Output()
+		} else {
+			exec.Command("git", "clone", cloneURL, repoPath).Output()
+		}
 
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Repo not registered with stac, please use the register API"})
 	}
+}
+
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }

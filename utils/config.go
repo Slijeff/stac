@@ -10,6 +10,7 @@ type Configuration struct {
 	IP   string
 	Port string
 	Pwd  string `json:"Stac-pwd"`
+	Base string `json:"BaseDir"`
 }
 
 var (
