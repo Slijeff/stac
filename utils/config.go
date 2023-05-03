@@ -7,10 +7,10 @@ import (
 )
 
 type Configuration struct {
-	IP   string
-	Port string
-	Pwd  string `json:"Stac-pwd"`
-	Base string `json:"BaseDir"`
+	IP   string `json:"ip"`
+	Port string `json:"port"`
+	Pwd  string `json:"stac-pwd"`
+	Base string `json:"baseDir"` // where the repos will be cloned
 }
 
 var (
@@ -18,7 +18,11 @@ var (
 )
 
 func ReadConfig(config_path string) {
-	var config Configuration
+	// populate default values
+	config := Configuration{
+		IP:   "0.0.0.0",
+		Port: "8080",
+	}
 
 	file, err := os.Open(config_path)
 	if err != nil {
@@ -34,6 +38,13 @@ func ReadConfig(config_path string) {
 	if err != nil {
 		fmt.Println("error: ", err)
 		panic("error parsing config file")
+	}
+
+	if config.Pwd == "" {
+		panic("stac-pwd field must be given in config.json")
+	}
+	if config.Base == "" {
+		panic("baseDir field must be given in config.json")
 	}
 
 	Config = &config

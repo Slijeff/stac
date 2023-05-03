@@ -1,6 +1,6 @@
 {
-    "IP": "localhost",
-    "Port": "8080",
-    "Stac-pwd": "test-password",
-    "BaseDir": "./repos"
+    "ip": "localhost",
+    "port": "8080",
+    "stac-pwd": "test-password",
+    "baseDir": "./repos"
 }

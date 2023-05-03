@@ -118,3 +118,5 @@ func verifyHeader(c *gin.Context) bool {
 
 	return true
 }
+
+// TODO: store repo secret in database, encrypt with stac-pwd

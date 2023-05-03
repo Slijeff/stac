@@ -18,7 +18,6 @@ import (
 )
 
 func HandleGithubWebhook(c *gin.Context) {
-	// hook, err := parser.Parse([]byte("safsdfasdf"), c.Request)
 	hook, err := parser.ParseWithoutSecret(c.Request)
 	if utils.CheckError(err) {
 		return
@@ -58,6 +57,7 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		if p.UseSecret {
+			// TODO: should get password from database
 			if !hook.Verify([]byte(utils.Config.Pwd)) {
 				c.JSON(http.StatusUnauthorized, OPUnauth)
 			}
