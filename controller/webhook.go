@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 
 	"stac/database"
@@ -13,6 +12,7 @@ import (
 	"stac/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v52/github"
 	"google.golang.org/protobuf/proto"
 )
@@ -72,14 +72,31 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		if existed {
-			if err := os.RemoveAll(repoPath); err != nil {
-				c.JSON(http.StatusInternalServerError, OPServerError)
-				return
+			// try cloning the repo if it already exist
+			localRepo, err := git.PlainOpen(repoPath)
+			if utils.CheckError(err) {
+				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
 			}
-			exec.Command("git", "clone", cloneURL, repoPath).Output()
+			w, err := localRepo.Worktree()
+			if utils.CheckError(err) {
+				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+			}
+			err = w.Pull(&git.PullOptions{
+				Progress: os.Stdout,
+			})
+			if utils.CheckError(err) {
+				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+			}
 		} else {
-			exec.Command("git", "clone", cloneURL, repoPath).Output()
+			_, err := git.PlainClone(repoPath, false, &git.CloneOptions{
+				URL:      cloneURL,
+				Progress: os.Stdout,
+			})
+			if utils.CheckError(err) {
+				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+			}
 		}
+		c.JSON(http.StatusOK, OPSuccess)
 
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Repo not registered with stac, please use the register API"})

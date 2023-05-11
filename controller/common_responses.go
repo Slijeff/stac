@@ -7,3 +7,7 @@ var (
 	OPServerError = gin.H{"msg": "server error"}
 	OPUnauth      = gin.H{"msg": "unauthorized operation"}
 )
+
+func OPCustomErr(e error) gin.H {
+	return gin.H{"msg": e.Error()}
+}
