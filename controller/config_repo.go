@@ -14,7 +14,14 @@ type RegisterRequestBody struct {
 	// repo name in the format of User/Repo, or it can be an organization
 	Name string `json:"name"`
 	// whether to use secret for this repo or not
-	Use_secret bool `json:"use_secret"`
+	UseSecret bool `json:"use_secret"`
+}
+
+type SetSecretBody struct {
+	// repo name in the format of User/Repo, or it can be an organization
+	Name string `json:"name"`
+	// whether to use secret for this repo or not
+	Secret string `json:"secret"`
 }
 
 func RegisterRepo(c *gin.Context) {
@@ -45,7 +52,7 @@ func RegisterRepo(c *gin.Context) {
 	} else {
 		// Create protobuf
 		p := models.GithubHook{
-			UseSecret: requestBody.Use_secret,
+			UseSecret: requestBody.UseSecret,
 		}
 		out, err := proto.Marshal(&p)
 		if err != nil {
@@ -80,16 +87,15 @@ func ChangeUseSecret(c *gin.Context) {
 		return
 	}
 	if hasRepo {
-		// Create protobuf
-		p := models.GithubHook{
-			UseSecret: requestBody.Use_secret,
-		}
-		out, err := proto.Marshal(&p)
-		if err != nil {
+		// get protobuf
+		pb := &models.GithubHook{}
+		if err := utils.GetProtoFromDB(requestBody.Name, pb); err != nil {
 			c.JSON(http.StatusInternalServerError, OPServerError)
 			return
 		}
-		if err := database.DB.Put([]byte(requestBody.Name), out, nil); err != nil {
+		pb.UseSecret = requestBody.UseSecret
+		// store it back
+		if err := utils.PutProtoToDB(requestBody.Name, pb); err != nil {
 			c.JSON(http.StatusInternalServerError, OPServerError)
 			return
 		}
@@ -104,14 +110,14 @@ func ChangeUseSecret(c *gin.Context) {
 }
 
 func verifyHeader(c *gin.Context) bool {
-	stac_pwd := c.GetHeader("stac-pwd")
-	if len(stac_pwd) == 0 {
+	stacPwd := c.GetHeader("stac-pwd")
+	if len(stacPwd) == 0 {
 		c.JSON(http.StatusUnauthorized, OPUnauth)
 		return false
 	}
 
 	// might use secure compare?
-	if stac_pwd != utils.Config.Pwd {
+	if stacPwd != utils.Config.Pwd {
 		c.JSON(http.StatusUnauthorized, OPUnauth)
 		return false
 	}
@@ -119,4 +125,42 @@ func verifyHeader(c *gin.Context) bool {
 	return true
 }
 
-// TODO: store repo secret in database, encrypt with stac-pwd
+func SetSecret(c *gin.Context) {
+	if !verifyHeader(c) {
+		return
+	}
+
+	var requestBody SetSecretBody
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "request format is incorrect",
+		})
+		return
+	}
+
+	hasRepo, err := database.DB.Has([]byte(requestBody.Name), nil)
+	if utils.CheckError(err) {
+		c.JSON(http.StatusInternalServerError, OPServerError)
+		return
+	}
+	if !hasRepo {
+		c.JSON(http.StatusOK, gin.H{
+			"msg": "repo don't exist, please register first",
+		})
+		return
+	}
+	// get protobuf
+	pb := &models.GithubHook{}
+	if err := utils.GetProtoFromDB(requestBody.Name, pb); err != nil {
+		c.JSON(http.StatusInternalServerError, OPServerError)
+		return
+	}
+	pb.Secret = requestBody.Secret
+	// store it back
+	if err := utils.PutProtoToDB(requestBody.Name, pb); err != nil {
+		c.JSON(http.StatusInternalServerError, OPServerError)
+		return
+	}
+	c.JSON(http.StatusOK, OPSuccess)
+}

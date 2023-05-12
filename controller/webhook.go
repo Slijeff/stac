@@ -72,7 +72,7 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		if existed {
-			// try cloning the repo if it already exist
+			// try cloning the repo if it already exists
 			localRepo, err := git.PlainOpen(repoPath)
 			if utils.CheckError(err) {
 				c.JSON(http.StatusInternalServerError, OPCustomErr(err))

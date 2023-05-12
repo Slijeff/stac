@@ -20,7 +20,7 @@ type Webhook struct {
 	Event string
 
 	// X-Hub-Signature-256 (using this only)
-	Signature_256 string
+	Signature256 string
 
 	// Payload
 	Payload []byte
@@ -36,14 +36,14 @@ func sign(secret, body []byte) []byte {
 }
 
 func (h *Webhook) Verify(secret []byte) bool {
-	if len(h.Signature_256) != (2*sigLength+len(sigPrefix)) || !strings.HasPrefix(h.Signature_256, sigPrefix) {
+	if len(h.Signature256) != (2*sigLength+len(sigPrefix)) || !strings.HasPrefix(h.Signature256, sigPrefix) {
 		fmt.Println("Format doesn't match")
 		return false
 	}
 
 	given := make([]byte, sigLength)
 	// convert string to hex
-	hex.Decode(given, []byte(h.Signature_256[len(sigPrefix):]))
+	hex.Decode(given, []byte(h.Signature256[len(sigPrefix):]))
 
 	computed := sign(secret, h.Payload)
 
@@ -65,7 +65,7 @@ func LoadWebhook(r *http.Request) (hook *Webhook, err error) {
 	if hook.Event = r.Header.Get("X-GitHub-Event"); len(hook.Event) == 0 {
 		return nil, errors.New("no X-GitHub-Event field")
 	}
-	if hook.Signature_256 = r.Header.Get("X-Hub-Signature-256"); len(hook.Signature_256) == 0 {
+	if hook.Signature256 = r.Header.Get("X-Hub-Signature-256"); len(hook.Signature256) == 0 {
 		return nil, errors.New("no X-Hub-Signature-256 field")
 	}
 

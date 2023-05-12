@@ -4,4 +4,5 @@ option go_package = "/models";
 
 message GithubHook {
     bool use_secret = 1;
+    string secret = 2;
 }

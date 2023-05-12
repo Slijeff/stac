@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type DBresult struct {
+type DBResult struct {
 	Key   string             `json:"key"`
 	Value *models.GithubHook `json:"protobuf"`
 }
@@ -21,7 +21,7 @@ func GetAllFromDB(c *gin.Context) {
 	iter := database.DB.NewIterator(nil, nil)
 	defer iter.Release()
 
-	var res []DBresult
+	var res []DBResult
 
 	for iter.Next() {
 		key := iter.Key()
@@ -30,7 +30,7 @@ func GetAllFromDB(c *gin.Context) {
 		pb := &models.GithubHook{}
 		proto.Unmarshal(val, pb)
 
-		res = append(res, DBresult{Key: string(key), Value: pb})
+		res = append(res, DBResult{Key: string(key), Value: pb})
 	}
 	c.JSON(http.StatusOK, res)
 }

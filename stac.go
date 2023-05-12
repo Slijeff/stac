@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os/signal"
 	"stac/controller"
 	"stac/database"
@@ -21,19 +22,25 @@ func main() {
 	database.InitDB("./data")
 
 	// gracefully exit
-	interrupt_chan := make(chan os.Signal, 1)
-	signal.Notify(interrupt_chan, os.Interrupt, syscall.SIGTERM)
+	interruptChan := make(chan os.Signal, 1)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-interrupt_chan
+		<-interruptChan
 		// do cleanups
-		database.DB.Close()
+		err := database.DB.Close()
+		if err != nil {
+			return
+		}
 		os.Exit(0)
 	}()
 
 	router := gin.Default()
-	router.SetTrustedProxies(nil)
+	err := router.SetTrustedProxies(nil)
+	if err != nil {
+		return
+	}
 
 	controller.Register(router)
 
-	router.Run(utils.Config.IP + ":" + utils.Config.Port)
+	log.Fatal(router.Run(utils.Config.IP + ":" + utils.Config.Port))
 }
