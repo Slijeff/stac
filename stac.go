@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"log"
 	"os/signal"
 	"stac/controller"
@@ -14,11 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed template/main.html
+var html string
+
 func main() {
 	if len(os.Args) < 2 {
 		panic("Please provide the config file path")
 	}
-
+	controller.Content = html
 	wg := sync.WaitGroup{}
 
 	wg.Add(2)
