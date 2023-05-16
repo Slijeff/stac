@@ -72,7 +72,7 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		if existed {
-			// try cloning the repo if it already exists
+			// try pulling the repo if it already exists
 			localRepo, err := git.PlainOpen(repoPath)
 			if utils.CheckError(err) {
 				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
@@ -96,6 +96,22 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
 			}
 		}
+
+		// parse Stacfile
+		stages, err := parser.ParseYaml(path.Join(repoPath, "Stacfile.yaml"))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, OPServerError)
+			return
+		}
+		// start goroutines for each `routine` type commands
+		for _, stage := range stages {
+			if stage.Type == "routine" {
+				// goroutines
+			}
+		}
+
+		// TODO: wait for concurrent execute, then start doing sequential
+
 		c.JSON(http.StatusOK, OPSuccess)
 
 	} else {

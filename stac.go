@@ -6,6 +6,7 @@ import (
 	"stac/controller"
 	"stac/database"
 	"stac/utils"
+	"sync"
 	"syscall"
 
 	"os"
@@ -17,9 +18,18 @@ func main() {
 	if len(os.Args) < 2 {
 		panic("Please provide the config file path")
 	}
-	utils.ReadConfig(os.Args[1])
 
-	database.InitDB("./data")
+	wg := sync.WaitGroup{}
+
+	wg.Add(2)
+	go func() {
+		utils.ReadConfig(os.Args[1])
+		wg.Done()
+	}()
+	go func() {
+		database.InitDB("./data")
+		wg.Done()
+	}()
 
 	// gracefully exit
 	interruptChan := make(chan os.Signal, 1)
@@ -42,5 +52,6 @@ func main() {
 
 	controller.Register(router)
 
+	wg.Wait()
 	log.Fatal(router.Run(utils.Config.IP + ":" + utils.Config.Port))
 }
