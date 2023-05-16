@@ -2,9 +2,242 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+    <title>Stac</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
 
+</head>
+<style>
+    .background {
+        background-color: #EAEAEA;
+        border-radius: 2rem;
+        padding: 3rem;
+        margin-bottom: 5vh;
+    }
+    .alert-fixed {
+        position:fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        z-index:9999;
+        border-radius:0px
+    }
+</style>
+
+<script>
+    $(function () {
+        $("#success").hide();
+        $("#fail").hide();
+    })
+    $(function () {
+        $("#registerButton").click(
+            function () {
+                var secret = $('#select1').find(":selected").text()
+                secret = secret === "true";
+                var req = {
+                    url: "/config/register",
+                    method: "post",
+                    contentType: "application/json",
+                    datatype: "json",
+                    headers: {'stac-pwd': $('#auth').val()},
+                    data: JSON.stringify({
+                        "name": $('#repo1').val(),
+                        "use_secret": secret
+                    }),
+                    success(msg) {
+                        $('#repo1').val('')
+                        if (msg.msg === 'success')
+                        {
+                            $("#success").fadeTo(2000, 500).slideUp(500, function() {
+                                $("#success").slideUp(500);
+                            });
+                        }else {
+
+                            $("#fail").fadeTo(2000, 500).slideUp(500, function() {
+                                $("#fail").html(msg.msg)
+                                $("#fail").slideUp(500);
+                            });
+                        }
+                    },
+                    error: function (msg) {
+                        $("#fail").fadeTo(2000, 500).slideUp(500, function() {
+                            $("#fail").html(msg.msg)
+                            $("#fail").slideUp(500);
+                        });
+                    }
+                }
+                $.ajax(req)
+            })
+    })
+    $(function () {
+        $("#changeSecretButton").click(
+            function () {
+                var secret = $('#select2').find(":selected").text()
+                secret = secret === "true";
+                var req = {
+                    url: "/config/secret",
+                    method: "post",
+                    contentType: "application/json",
+                    datatype: "json",
+                    headers: {'stac-pwd': $('#auth').val()},
+                    data: JSON.stringify({
+                        "name": $('#repo2').val(),
+                        "use_secret": secret
+                    }),
+                    success(msg) {
+                        $('#repo2').val('')
+                        if (msg.msg === 'success')
+                        {
+                            $("#success").fadeTo(2000, 500).slideUp(500, function() {
+                                $("#success").slideUp(500);
+                            });
+                        }else {
+
+                            $("#fail").fadeTo(2000, 500).slideUp(500, function() {
+                                $("#fail").html(msg.msg)
+                                $("#fail").slideUp(500);
+                            });
+                        }
+                    },
+                    error: function (msg) {
+                        $("#fail").fadeTo(2000, 500).slideUp(500, function() {
+                            $("#fail").html(msg.msg)
+                            $("#fail").slideUp(500);
+                        });
+                    }
+                }
+                $.ajax(req)
+            })
+    })
+    $(function () {
+        $("#ghSecretButton").click(
+            function () {
+                var req = {
+                    url: "/config/setsec",
+                    method: "post",
+                    contentType: "application/json",
+                    datatype: "json",
+                    headers: {'stac-pwd': $('#auth').val()},
+                    data: JSON.stringify({
+                        "name": $('#repo3').val(),
+                        "secret": $('#secret3').val()
+                    }),
+                    success(msg) {
+                        $('#repo3').val('')
+                        $('#secret3').val('')
+                        if (msg.msg === 'success')
+                        {
+                            $("#success").fadeTo(2000, 500).slideUp(500, function() {
+                                $("#success").slideUp(500);
+                            });
+                        }else {
+
+                            $("#fail").fadeTo(2000, 500).slideUp(500, function() {
+                                $("#fail").html(msg.msg)
+                                $("#fail").slideUp(500);
+                            });
+                        }
+                    },
+                    error: function (msg) {
+
+                        $("#fail").fadeTo(2000, 500).slideUp(500, function() {
+                            $("#fail").html(msg.msg)
+                            $("#fail").slideUp(500);
+                        });
+                    }
+                }
+                $.ajax(req)
+            })
+    })
+</script>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Flag_of_the_People%27s_Republic_of_China.svg" width="30" height="30" class="d-inline-block align-top" alt="" style="margin-left: 20px">
+            Stac
+        </a>
+    </nav>
+    <div class="alert alert-success alert-fixed" role="alert" id="success" >
+        Operation Succeed !
+    </div>
+    <div class="alert alert-danger alert-fixed" role="alert" id="fail" >
+        Operation Failed !
+    </div>
+
+    <div class="container" style="margin-top: 4vh">
+        <!-- Content here -->
+
+        <div class="container-sm background" style="max-width: 64vh">
+            <h4>Stac Password</h4>
+            <div class="input-group mb-3" style="margin-top: 2vh">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Auth</span>
+                </div>
+                <input type="text" class="form-control" aria-describedby="basic-addon1" id="auth">
+            </div>
+        </div>
+
+
+        <div class="container-sm background" style="max-width: 64vh">
+            <!-- Content here -->
+            <h3>Register Repo</h3>
+            <form style="margin-top: 2vh">
+                <div class="form-group">
+                    <label for="repo1">Repository Name</label>
+                    <input class="form-control" id="repo1" aria-describedby="" placeholder="e.g., slijeff/stac">
+                    <small id="repoHelper1" class="form-text text-muted">This is the GitHub Repo Name.</small>
+                </div>
+                <div class="form-group">
+                    <label for="select1">Secret</label>
+                    <select class="form-control" id="select1">
+                        <option>true</option>
+                        <option>false</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" style="margin-top: 2vh" id="registerButton">Submit</button>
+            </form>
+        </div>
+
+        <div class="container-sm background" style="max-width: 64vh">
+            <!-- Content here -->
+            <h3>Secret</h3>
+            <form style="margin-top: 2vh">
+                <div class="form-group">
+                    <label for="repo2">Repository Name</label>
+                    <input class="form-control" id="repo2" aria-describedby="" placeholder="e.g., slijeff/stac">
+                    <small id="repo2Help" class="form-text text-muted">This is the GitHub Repo Name.</small>
+                </div>
+                <div class="form-group">
+                    <label for="secretScroll2">Secret</label>
+                    <select class="form-control" id="secretScroll2">
+                        <option>true</option>
+                        <option>false</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" style="margin-top: 2vh" id="changeSecretButton">Submit</button>
+            </form>
+        </div>
+
+        <div class="container-sm background" style="max-width: 64vh">
+            <!-- Content here -->
+            <h3>Change GitHub Secret</h3>
+            <form style="margin-top: 2vh">
+                <div class="form-group">
+                    <label for="repo3">Repository Name</label>
+                    <input class="form-control" id="repo3" aria-describedby="" placeholder="e.g., slijeff/stac">
+                    <small id="repoHelper3" class="form-text text-muted">This is the GitHub Repo Name.</small>
+                </div>
+                <div class="form-group">
+                    <label for="secret3">New Secret</label>
+                    <input class="form-control" id="secret3" aria-describedby="">
+                    <small id="secretHelper3" class="form-text text-muted">This is the new secret.</small>
+                </div>
+                <button type="button" class="btn btn-primary" style="margin-top: 2vh" id="ghSecretButton">Submit</button>
+            </form>
+        </div>
+
+
+    </div>
 </body>
 </html>
