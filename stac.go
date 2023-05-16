@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	_ "embed"
 	"log"
 	"os/signal"
@@ -15,16 +16,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed template/main.html
-var html string
+//go:embed template/*
+var templates embed.FS
 
 func main() {
 	if len(os.Args) < 2 {
 		panic("Please provide the config file path")
 	}
-	controller.Content = html
-	wg := sync.WaitGroup{}
 
+	// Inject Frontend code
+	content, err := templates.ReadFile("template/main.html")
+	if utils.CheckError(err) {
+		panic("Frontend read error")
+	}
+	controller.MainContent = content
+
+	wg := sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
 		utils.ReadConfig(os.Args[1])
@@ -49,7 +56,7 @@ func main() {
 	}()
 
 	router := gin.Default()
-	err := router.SetTrustedProxies(nil)
+	err = router.SetTrustedProxies(nil)
 	if err != nil {
 		return
 	}

@@ -1,13 +1,12 @@
 package controller
 
 import (
-	_ "embed"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-var Content string
+var MainContent []byte
 
 func HandleMainFrontend(c *gin.Context) {
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(Content))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", MainContent)
 }
