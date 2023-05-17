@@ -2,14 +2,17 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
-
 	"stac/database"
 	"stac/models"
 	"stac/parser"
 	"stac/utils"
+	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
@@ -60,6 +63,7 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			// TODO: should get password from database
 			if !hook.Verify([]byte(utils.Config.Pwd)) {
 				c.JSON(http.StatusUnauthorized, OPUnauth)
+				return
 			}
 		}
 
@@ -76,16 +80,20 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			localRepo, err := git.PlainOpen(repoPath)
 			if utils.CheckError(err) {
 				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+				return
 			}
 			w, err := localRepo.Worktree()
 			if utils.CheckError(err) {
 				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+				return
 			}
 			err = w.Pull(&git.PullOptions{
 				Progress: os.Stdout,
 			})
 			if utils.CheckError(err) {
-				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+				// TODO: This is only used for debugging
+				//c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+				//return
 			}
 		} else {
 			_, err := git.PlainClone(repoPath, false, &git.CloneOptions{
@@ -94,6 +102,7 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			})
 			if utils.CheckError(err) {
 				c.JSON(http.StatusInternalServerError, OPCustomErr(err))
+				return
 			}
 		}
 
@@ -104,15 +113,30 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		// start goroutines for each `routine` type commands
+		var wg sync.WaitGroup
 		for _, stage := range stages {
 			if stage.Type == "routine" {
+				wg.Add(1)
 				// goroutines
+				go func(s parser.Stage) {
+					defer wg.Done()
+					for _, c := range s.Commands {
+						comms := strings.Fields(c)
+						out, err := exec.Command("powershell", comms...).Output()
+						if utils.CheckError(err) {
+							return
+						}
+						fmt.Printf("%s\n", out)
+					}
+				}(stage)
 			}
 		}
+		wg.Wait()
 
 		// TODO: wait for concurrent execute, then start doing sequential
 
 		c.JSON(http.StatusOK, OPSuccess)
+		return
 
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Repo not registered with stac, please use the register API"})
