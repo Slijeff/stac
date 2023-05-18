@@ -3,21 +3,20 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/go-git/go-git/v5"
+	"github.com/google/go-github/v52/github"
+	"google.golang.org/protobuf/proto"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"stac/database"
 	"stac/models"
 	"stac/parser"
 	"stac/utils"
 	"strings"
-	"sync"
-
-	"github.com/gin-gonic/gin"
-	"github.com/go-git/go-git/v5"
-	"github.com/google/go-github/v52/github"
-	"google.golang.org/protobuf/proto"
 )
 
 func HandleGithubWebhook(c *gin.Context) {
@@ -112,29 +111,36 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, OPServerError)
 			return
 		}
-		// start goroutines for each `routine` type commands
-		var wg sync.WaitGroup
+		// start goroutines for each commands block
 		for _, stage := range stages {
-			if stage.Type == "routine" {
-				wg.Add(1)
-				// goroutines
-				go func(s parser.Stage) {
-					defer wg.Done()
-					for _, c := range s.Commands {
-						comms := strings.Fields(c)
-						out, err := exec.Command("powershell", comms...).Output()
-						if utils.CheckError(err) {
-							return
-						}
-						fmt.Printf("%s\n", out)
+			execute := func(s parser.Stage, shell string) {
+				for _, c := range s.Commands {
+					comms := strings.Fields(c)
+					var cmd *exec.Cmd
+					if shell == "bash" {
+						cmd = exec.Command(shell, append([]string{"-c"}, comms...)...)
+					} else {
+						cmd = exec.Command(shell, comms...)
 					}
-				}(stage)
+					cmd.Stdout = os.Stdout
+					err := cmd.Start()
+					if utils.CheckError(err) {
+						return
+					}
+					// Wait in background
+					err = cmd.Wait()
+					if err != nil {
+						fmt.Printf("Command finished with error: %v \n", err)
+					}
+				}
+			}
+			// determine which shell it uses
+			if runtime.GOOS == "windows" {
+				go execute(stage, "powershell")
+			} else if runtime.GOOS == "linux" {
+				go execute(stage, "bash")
 			}
 		}
-		wg.Wait()
-
-		// TODO: wait for concurrent execute, then start doing sequential
-
 		c.JSON(http.StatusOK, OPSuccess)
 		return
 

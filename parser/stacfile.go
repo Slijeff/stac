@@ -10,7 +10,6 @@ type Pipeline struct {
 }
 
 type Stage struct {
-	Type     string   `yaml:"type"`
 	Commands []string `yaml:"commands"`
 }
 
