@@ -44,7 +44,7 @@ func main() {
 
 	// gracefully exit
 	interruptChan := make(chan os.Signal, 1)
-	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 	go func() {
 		<-interruptChan
 		// do cleanups

@@ -59,8 +59,7 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		if p.UseSecret {
-			// TODO: should get password from database
-			if !hook.Verify([]byte(utils.Config.Pwd)) {
+			if !hook.Verify([]byte(p.Secret)) {
 				c.JSON(http.StatusUnauthorized, OPUnauth)
 				return
 			}
