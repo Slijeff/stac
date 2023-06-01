@@ -11,9 +11,9 @@
 <style>
     .background {
         background-color: #EAEAEA;
-        border-radius: 2rem;
-        padding: 3rem;
-        margin-bottom: 5vh;
+        /* border-radius: 1rem; */
+        padding: 1rem;
+        /* margin-bottom: 5vh; */
     }
     .alert-fixed {
         position:fixed;
@@ -152,10 +152,9 @@
     })
 </script>
 <body>
-    <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="#">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Flag_of_the_People%27s_Republic_of_China.svg" width="30" height="30" class="d-inline-block align-top" alt="" style="margin-left: 20px">
-            Stac
+    <nav class="navbar navbar-light bg-light position-fixed" style="z-index: 999; top: 0; width: 100vw;">
+        <a class="navbar-brand p-2 ml-2" href="#">
+            Stac Control Panel
         </a>
     </nav>
     <div class="alert alert-success alert-fixed" role="alert" id="success" >
@@ -165,7 +164,7 @@
         Operation Failed !
     </div>
 
-    <div class="container" style="margin-top: 4vh">
+    <div class="d-flex justify-content-between flex-row mt-5">
         <!-- Content here -->
 
         <div class="container-sm background" style="max-width: 64vh">
