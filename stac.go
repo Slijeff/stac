@@ -2,13 +2,11 @@ package main
 
 import (
 	"embed"
-	_ "embed"
 	"log"
 	"os/signal"
 	"stac/controller"
 	"stac/database"
 	"stac/utils"
-	"sync"
 	"syscall"
 
 	"os"
@@ -23,6 +21,12 @@ func main() {
 	if len(os.Args) < 2 {
 		panic("Please provide the config file path")
 	}
+	utils.ReadConfig(os.Args[1])
+	database.InitDB("./data")
+
+	// Setup Logging
+	staclogger := utils.GetStacLogger()
+	staclogger.Println("Starting...")
 
 	// Inject Frontend code
 	content, err := templates.ReadFile("template/main.html")
@@ -31,27 +35,18 @@ func main() {
 	}
 	controller.MainContent = content
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go func() {
-		utils.ReadConfig(os.Args[1])
-		wg.Done()
-	}()
-	go func() {
-		database.InitDB("./data")
-		wg.Done()
-	}()
-
 	// gracefully exit
 	interruptChan := make(chan os.Signal, 1)
-	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-interruptChan
+		staclogger.Println("Exiting...")
 		// do cleanups
 		err := database.DB.Close()
 		if err != nil {
 			return
 		}
+		utils.CloseAllLogFiles()
 		os.Exit(0)
 	}()
 
@@ -62,7 +57,5 @@ func main() {
 	}
 
 	controller.Register(router)
-
-	wg.Wait()
 	log.Fatal(router.Run(utils.Config.IP + ":" + utils.Config.Port))
 }

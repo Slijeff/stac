@@ -2,5 +2,7 @@
     "ip": "localhost",
     "port": "8080",
     "stac-pwd": "test-password",
-    "baseDir": "./repos"
+    "baseDir": "./repos",
+    "stacLog": "staclog.log",
+    "execLog": "execlog.log"
 }

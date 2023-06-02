@@ -3,3 +3,4 @@ stac.exe
 .vscode
 .idea
 /repos
+*.log

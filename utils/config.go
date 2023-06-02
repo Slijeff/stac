@@ -7,10 +7,12 @@ import (
 )
 
 type Configuration struct {
-	IP   string `json:"ip"`
-	Port string `json:"port"`
-	Pwd  string `json:"stac-pwd"`
-	Base string `json:"baseDir"` // where the repos will be cloned
+	IP      string `json:"ip"`
+	Port    string `json:"port"`
+	Pwd     string `json:"stac-pwd"`
+	Base    string `json:"baseDir"` // where the repos will be cloned
+	StacLog string `json:"stacLog"`
+	ExecLog string `json:"execLog"`
 }
 
 var (
@@ -45,6 +47,12 @@ func ReadConfig(config_path string) {
 	}
 	if config.Base == "" {
 		panic("baseDir field must be given in config.json")
+	}
+	if config.StacLog == "" {
+		panic("stacLog field must be given in config.json")
+	}
+	if config.ExecLog == "" {
+		panic("execLog field must be given in config.json")
 	}
 
 	Config = &config
