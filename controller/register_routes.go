@@ -24,6 +24,5 @@ func Register(router *gin.Engine) {
 	dbRoute.GET("/delkey", DeleteSingleKey)
 
 	// FRONTEND GROUP
-	// frontend := router.Group("/f")
 	router.GET("/f", HandleMainFrontend)
 }

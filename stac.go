@@ -26,7 +26,9 @@ func main() {
 
 	// Setup Logging
 	staclogger := utils.GetStacLogger()
+	execlogger := utils.GetExecLogger()
 	staclogger.Println("Starting...")
+	execlogger.Println("Starting...")
 
 	// Inject Frontend code
 	content, err := templates.ReadFile("template/main.html")
@@ -41,6 +43,8 @@ func main() {
 	go func() {
 		<-interruptChan
 		staclogger.Println("Exiting...")
+		execlogger.Println("Exiting...")
+
 		// do cleanups
 		err := database.DB.Close()
 		if err != nil {

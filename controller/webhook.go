@@ -2,11 +2,7 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-git/go-git/v5"
-	"github.com/google/go-github/v52/github"
-	"google.golang.org/protobuf/proto"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,11 +13,18 @@ import (
 	"stac/parser"
 	"stac/utils"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-git/go-git/v5"
+	"github.com/google/go-github/v52/github"
+	"google.golang.org/protobuf/proto"
 )
 
 func HandleGithubWebhook(c *gin.Context) {
 	hook, err := parser.ParseWithoutSecret(c.Request)
+	stacLogger := utils.GetStacLogger()
 	if utils.CheckError(err) {
+		stacLogger.Println("Webhook received but error while parsing")
 		return
 	}
 	// Determine which kind of event it is
@@ -35,6 +38,7 @@ func HandleGithubWebhook(c *gin.Context) {
 }
 
 func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
+	execLogger := utils.GetExecLogger()
 	evt := github.PushEvent{}
 	err := json.Unmarshal(hook.Payload, &evt)
 	if utils.CheckError(err) {
@@ -111,8 +115,9 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 			return
 		}
 		// start goroutines for each commands block
+		execLogger.Printf("Executing %d command blocks", len(stages))
 		for _, stage := range stages {
-			execute := func(s parser.Stage, shell string) {
+			execute := func(s parser.Stage, shell string, logger *log.Logger) {
 				for _, c := range s.Commands {
 					comms := strings.Fields(c)
 					var cmd *exec.Cmd
@@ -121,23 +126,24 @@ func handlePushEvent(hook *parser.Webhook, c *gin.Context) {
 					} else {
 						cmd = exec.Command(shell, comms...)
 					}
-					cmd.Stdout = os.Stdout
-					err := cmd.Start()
+					// cmd.Stdout = os.Stdout
+					res, err := cmd.Output()
+					logger.Print(string(res))
 					if utils.CheckError(err) {
 						return
 					}
 					// Wait in background
-					err = cmd.Wait()
-					if err != nil {
-						fmt.Printf("Command finished with error: %v \n", err)
-					}
+					// err = cmd.Wait()
+					// if err != nil {
+					// 	fmt.Printf("Command finished with error: %v \n", err)
+					// }
 				}
 			}
 			// determine which shell it uses
 			if runtime.GOOS == "windows" {
-				go execute(stage, "powershell")
+				go execute(stage, "powershell", execLogger)
 			} else if runtime.GOOS == "linux" {
-				go execute(stage, "bash")
+				go execute(stage, "bash", execLogger)
 			}
 		}
 		c.JSON(http.StatusOK, OPSuccess)

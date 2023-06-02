@@ -9,18 +9,19 @@ import (
 
 var staclogger *log.Logger
 var execlogger *log.Logger
-var once sync.Once
+var stacOnce sync.Once
+var execOnce sync.Once
 var logFiles []*os.File
 
 func GetStacLogger() *log.Logger {
-	once.Do(func() {
+	stacOnce.Do(func() {
 		staclogger = createStacLogger(Config.StacLog)
 	})
 	return staclogger
 }
 
 func GetExecLogger() *log.Logger {
-	once.Do(func() {
+	execOnce.Do(func() {
 		execlogger = createExecLogger(Config.ExecLog)
 	})
 	return execlogger
