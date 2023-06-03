@@ -1,0 +1,13 @@
+# This is an example of how a Stacfile should be
+pipeline:
+  - commands:
+      - echo 'hello world from first job (1)!'
+      - echo 'hello world from first job (2)!'
+      - echo 'hello world from first job (3)!'
+  - commands:
+      - echo 'hello world from second job!'
+  - commands:
+      - echo 'hello world from third job!'
+      - ls
+  - commands:
+      - python repos/stac-test/some_code.py
